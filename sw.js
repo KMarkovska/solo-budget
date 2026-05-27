@@ -1,10 +1,10 @@
-const CACHE_NAME = "solo-budget-v75";
+const CACHE_NAME = "solo-budget-v76";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=75",
-  "./app.js?v=75",
-  "./manifest.webmanifest?v=75",
+  "./styles.css?v=76",
+  "./app.js?v=76",
+  "./manifest.webmanifest?v=76",
   "./icons/icon.svg"
 ];
 

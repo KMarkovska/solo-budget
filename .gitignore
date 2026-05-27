@@ -5,6 +5,7 @@ solo-budget-spreadsheet-*.csv
 
 # Local test and release artifacts
 screenshots/
+responsive-screenshots/
 _restore_*/
 *.zip
 ux-test-*.png
