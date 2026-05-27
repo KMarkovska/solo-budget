@@ -1,0 +1,15 @@
+# Private budget data and exports
+solo-budget-file-*.json
+solo-budget-spreadsheet-*.csv
+*.budget.json
+
+# Local test and release artifacts
+screenshots/
+_restore_*/
+*.zip
+ux-test-*.png
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/

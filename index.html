@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'" />
+    <meta name="theme-color" content="#0f1f3d" />
+    <title>Solo Budget</title>
+    <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="manifest.webmanifest?v=75" />
+    <link rel="stylesheet" href="styles.css?v=75" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="App navigation">
+        <div class="sidebar-brand">
+          <strong>Solo Budget</strong>
+          <button class="menu-button" type="button" aria-label="Hide menu" aria-expanded="true" aria-controls="mainNav">Hide menu</button>
+        </div>
+
+        <nav class="side-nav" id="mainNav" aria-label="Main sections">
+          <a class="active" href="#dashboard">Dashboard</a>
+          <a href="#reports">Reports</a>
+          <a href="#goals">Goals & investments</a>
+          <a href="#breakdown">Breakdown</a>
+          <a href="#entries">Entries</a>
+        </nav>
+
+        <div class="sidebar-export">
+          <button class="secondary-button" id="exportData" type="button">Save budget file</button>
+          <label class="secondary-button file-label">
+            <span>Load budget file</span>
+            <input id="importData" type="file" accept="application/json" />
+          </label>
+          <button class="secondary-button" id="exportCsv" type="button">Open in Excel</button>
+          <p class="storage-status" id="storageStatus">Saved in this browser only.</p>
+        </div>
+      </aside>
+
+      <main class="workspace" id="dashboard">
+        <header class="topbar">
+          <div class="topbar-left">
+            <label class="date-control">
+              <span>Report month</span>
+              <input id="reportMonth" type="month" />
+            </label>
+          </div>
+          <label class="compact-control">
+            <span>Main currency</span>
+            <select id="currency">
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="CAD">CAD</option>
+              <option value="AUD">AUD</option>
+              <option value="CHF">CHF</option>
+              <option value="JPY">JPY</option>
+              <option value="PLN">PLN</option>
+              <option value="RON">RON</option>
+              <option value="TRY">TRY</option>
+            </select>
+          </label>
+          <fieldset class="compact-control theme-control">
+            <legend>Theme</legend>
+            <div class="theme-toggle" aria-label="Theme">
+              <button type="button" data-theme-choice="light" aria-pressed="true">
+                <span class="theme-swatch theme-swatch-light" aria-hidden="true"></span>
+                <span>Light</span>
+              </button>
+              <button type="button" data-theme-choice="dark" aria-pressed="false">
+                <span class="theme-swatch theme-swatch-dark" aria-hidden="true"></span>
+                <span>Dark</span>
+              </button>
+            </div>
+          </fieldset>
+        </header>
+
+        <section class="metrics-grid" id="metricsGrid" aria-label="Budget summary"></section>
+
+        <section class="dashboard-grid" id="reports">
+          <section class="report-section monthly-card">
+            <div class="section-title">
+              <h2>Monthly money picture</h2>
+              <p id="overviewInsight"></p>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="monthlyPictureChart" width="920" height="360" aria-label="Monthly income, expenses, savings, and invested chart"></canvas>
+              <div id="monthlyChartTooltip" class="chart-tooltip" hidden></div>
+            </div>
+            <div id="overviewFlow" class="visually-hidden"></div>
+          </section>
+
+          <section class="report-section yearly-card">
+            <div class="section-title">
+              <h2>Yearly money picture</h2>
+              <p id="yearOverviewInsight"></p>
+            </div>
+            <div id="yearOverviewFlow" class="year-donut" aria-label="Yearly expenses, savings, investments, available money, and over budget amount"></div>
+          </section>
+
+          <section class="entry-panel" aria-labelledby="entry-title">
+            <div class="section-title">
+              <h2 id="entry-title">Add entry</h2>
+              <p id="todayLabel"></p>
+            </div>
+
+            <form id="transactionForm" class="transaction-form">
+              <input id="transactionId" type="hidden" />
+
+              <div class="segmented" role="radiogroup" aria-label="Transaction type">
+                <label>
+                  <input type="radio" name="type" value="income" />
+                  <span>Income</span>
+                </label>
+                <label>
+                  <input type="radio" name="type" value="expense" checked />
+                  <span>Expense</span>
+                </label>
+                <label>
+                  <input type="radio" name="type" value="savings" />
+                  <span>Savings</span>
+                </label>
+                <label>
+                  <input type="radio" name="type" value="investment" />
+                  <span>Invest</span>
+                </label>
+              </div>
+
+              <label>
+                <span class="required-label">Date</span>
+                <input id="date" type="date" required />
+              </label>
+
+              <label>
+                <span class="required-label">Description</span>
+                <input id="description" type="text" placeholder="e.g. Freelance work" required />
+              </label>
+
+              <label>
+                <span>Category</span>
+                <input id="category" type="text" list="categoryOptions" placeholder="Select category" />
+                <datalist id="categoryOptions"></datalist>
+              </label>
+
+              <div class="form-grid">
+                <label>
+                  <span class="required-label">Amount</span>
+                  <input id="amount" type="number" min="0" step="0.01" placeholder="0.00" required />
+                </label>
+                <label>
+                  <span>Currency</span>
+                  <select id="transactionCurrency"></select>
+                </label>
+              </div>
+
+              <label id="exchangeRateField">
+                <span id="exchangeRateLabel" class="required-label">Conversion rate</span>
+                <input id="exchangeRate" type="number" min="0" step="0.000001" value="1" required />
+              </label>
+
+              <details class="optional-details">
+                <summary>Optional details</summary>
+                <label>
+                  <span id="merchantLabel">Store or person</span>
+                  <input id="merchant" type="text" placeholder="Lidl, supermarket, client..." />
+                </label>
+
+                <label>
+                  <span>Paid with / received in</span>
+                  <input id="account" type="text" placeholder="Debit card, cash, bank..." />
+                </label>
+              </details>
+
+              <div class="form-actions">
+                <button type="submit" class="primary-button" id="saveTransaction">Add entry</button>
+                <button type="button" class="secondary-button" id="cancelEdit" hidden>Cancel edit</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="transactions-section comparison-card" id="month-comparison">
+            <div class="section-title">
+              <h2>Month comparison</h2>
+              <p id="monthComparisonInsight"></p>
+            </div>
+            <div class="table-wrap">
+              <table class="comparison-table">
+                <thead id="monthComparisonHead">
+                  <tr>
+                    <th>Month</th>
+                    <th class="amount-cell">Income</th>
+                    <th class="amount-cell">Expenses</th>
+                    <th class="amount-cell">Savings</th>
+                    <th class="amount-cell">Invested</th>
+                    <th class="amount-cell">Available</th>
+                    <th>Note</th>
+                  </tr>
+                </thead>
+                <tbody id="monthComparisonTable"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="goals-grid" id="goals">
+          <section class="transactions-section goals-card">
+            <div class="section-title">
+              <h2>Goals</h2>
+              <p id="goalsInsight"></p>
+            </div>
+            <form id="goalForm" class="goal-form">
+              <label>
+                <span class="required-label">Goal</span>
+                <input id="goalName" type="text" placeholder="New laptop, holiday, emergency fund..." required />
+              </label>
+              <label>
+                <span class="required-label">Goal amount</span>
+                <input id="goalAmount" type="number" min="0" step="0.01" placeholder="0.00" required />
+              </label>
+              <button type="submit" class="primary-button">Add goal</button>
+            </form>
+            <div id="goalsList" class="goals-list"></div>
+          </section>
+
+          <section class="transactions-section investments-card" id="investments">
+            <div class="section-title">
+              <h2>Investments</h2>
+              <p id="investmentsInsight"></p>
+            </div>
+            <div id="investmentsList" class="investment-list"></div>
+          </section>
+        </section>
+
+        <section class="report-section" id="breakdown">
+          <div class="section-title">
+            <h2>Breakdown</h2>
+            <p id="breakdownInsight"></p>
+          </div>
+          <div class="breakdown-controls">
+            <label>
+              <span>Show</span>
+              <select id="breakdownPeriod">
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </label>
+            <div class="view-toggle" role="group" aria-label="Breakdown view">
+              <button type="button" class="toggle-button active" data-breakdown-view="expense">Expenses</button>
+              <button type="button" class="toggle-button" data-breakdown-view="income">Income</button>
+              <button type="button" class="toggle-button" data-breakdown-view="savings">Savings</button>
+              <button type="button" class="toggle-button" data-breakdown-view="investment">Investments</button>
+            </div>
+          </div>
+          <div class="breakdown-body">
+            <div class="chart-wrap breakdown-chart-wrap">
+              <canvas id="breakdownChart" width="680" height="280" aria-label="Breakdown chart"></canvas>
+              <div id="breakdownChartTooltip" class="chart-tooltip" hidden></div>
+            </div>
+            <div id="breakdownList" class="breakdown-list"></div>
+          </div>
+        </section>
+
+        <section class="transactions-section" id="entries">
+          <div class="section-title">
+            <h2>Entries</h2>
+            <p id="transactionCount"></p>
+          </div>
+          <div class="transactions-toolbar">
+            <label class="entry-filter entry-search">
+              <span>Search</span>
+              <input id="search" type="search" placeholder="Description, category, account..." />
+            </label>
+            <label class="entry-filter">
+              <span>Type</span>
+              <select id="typeFilter" aria-label="Filter by type">
+                <option value="all">All</option>
+                <option value="expense">Expenses</option>
+                <option value="income">Income</option>
+                <option value="savings">Savings</option>
+                <option value="investment">Investments</option>
+              </select>
+            </label>
+            <label class="entry-filter">
+              <span>From date</span>
+              <input id="dateFromFilter" type="date" />
+            </label>
+            <label class="entry-filter">
+              <span>To date</span>
+              <input id="dateToFilter" type="date" />
+            </label>
+            <label class="entry-filter">
+              <span>Amount</span>
+              <select id="amountModeFilter" aria-label="Amount filter mode">
+                <option value="any">Any amount</option>
+                <option value="exact">Exactly</option>
+                <option value="above">Above</option>
+                <option value="below">Below</option>
+              </select>
+            </label>
+            <label class="entry-filter">
+              <span>Amount value</span>
+              <input id="amountValueFilter" type="number" min="0" step="0.01" placeholder="0.00" />
+            </label>
+            <label class="entry-filter">
+              <span>Sort</span>
+              <select id="sortFilter" aria-label="Sort entries">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="amount-desc">Biggest amount first</option>
+                <option value="amount-asc">Smallest amount first</option>
+              </select>
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th class="amount-cell">Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="transactionsTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="transactions-section storage-guide">
+          <div class="section-title">
+            <h2>Budget files</h2>
+            <p>For SharePoint, save and load your budget file.</p>
+          </div>
+          <div class="storage-grid">
+            <div>
+              <strong>Automatic saving</strong>
+              <p>Your entries are saved in this browser on this device. They stay private, but they do not automatically appear in another browser or phone.</p>
+            </div>
+            <div>
+              <strong>Move or back up your budget</strong>
+              <p>Use <b>Save budget file</b> and keep that file in OneDrive or SharePoint. On another device, open the app and use <b>Load budget file</b>.</p>
+            </div>
+            <div>
+              <strong>Readable spreadsheet</strong>
+              <p>Use <b>Open in Excel</b> when you want a simple spreadsheet copy. The budget file is the one that keeps all app data.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <template id="emptyRowTemplate">
+      <tr>
+        <td colspan="6" class="empty-state">No entries yet. Add income, an expense, or savings to start.</td>
+      </tr>
+    </template>
+
+    <script src="app.js?v=75"></script>
+  </body>
+</html>
