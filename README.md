@@ -6,6 +6,10 @@ Solo Budget is a private, single-person budgeting app that runs as static files.
 
 Use the app here: [https://solo-budget.netlify.app](https://solo-budget.netlify.app)
 
+## App screenshot
+
+<img width="934" height="748" alt="image" src="https://github.com/user-attachments/assets/6c948adb-14af-4039-8b2a-c00d088021c9" />
+
 ## Features
 
 - Add, edit, remove, and search income, expense, and savings entries.
